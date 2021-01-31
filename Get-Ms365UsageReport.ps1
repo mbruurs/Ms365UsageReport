@@ -75,6 +75,8 @@ param (
     [Parameter(Mandatory)]
     [string]$Config
 )
+
+
 #Region Functions
 Function LogEnd {
     $txnLog = ""
@@ -121,23 +123,20 @@ if (!(Test-Path $logFolder)) {
 }
 
 #region config
-
-# Import configuration
-try {
-    $Config = (Resolve-Path $Config -ErrorAction STOP).Path.ToString()
-}
-catch {
+if (!(Test-path $Config)) {
     Write-Output "$(Get-Date) : [X] Cannot open the configuration file. Make sure that the file is accessible and valid."
     LogEnd
     return $null
 }
-
-$options = Get-Content $Config -Raw | ConvertFrom-Json
-
-$transLog = $options.parameters.transLog
-
-
-Write-Output "$(Get-Date) : Using configuration from $($Config)"
+else
+{
+# Import configuration
+    $options = Get-Content -path $Config -Raw | ConvertFrom-Json
+    Write-Host "Options" $options
+    $transLog = $options.parameters.transLog
+    Write-Output "$(Get-Date) : Using configuration from $($Config)"
+    pause
+}
 
 $enabledReport = @()
 
@@ -1210,6 +1209,8 @@ if ($sendEmail) {
                 )
             }
         }
+        Write-Host "Mailbody"
+        pause
         $mailBody = $mailBody | ConvertTo-JSON -Depth 4
         $ServicePoint = [System.Net.ServicePointManager]::FindServicePoint('https://graph.microsoft.com')
         $mailApiUri = "https://graph.microsoft.com/$graphApiVersion/users/$($fromAddress)/sendmail"
